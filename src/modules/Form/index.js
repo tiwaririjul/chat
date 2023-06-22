@@ -1,24 +1,29 @@
 import React, { useState } from "react";
 import Input from "../../components/Input/Index";
 import Button from "../../components/Button";
-const Form = ({
-  isSignInPage = true,
-}) => {
+const Form = ({ isSignInPage = true }) => {
   const [data, setdata] = useState({
-    ...Button(!isSignInPage && {
-      fullname: '',
-    }),
-    email: '',
-    password: '',
-  })
+    ...Button(
+      !isSignInPage && {
+        fullname: "",
+      }
+    ),
+    email: "",
+    password: "",
+  });
   return (
     <div className="bg-white w-[450px] h-[600px] shadow-lg rounded-lg flex flex-col justify-center items-center">
-      <div className="text-4xl font-extrabold">Welcome {isSignInPage && 'Back'}</div>
-      <div className=" text-xl font-light mb-14">
-        {isSignInPage ? 'Sign in to get Explored' : 'Sign up to get started'}
+      <div className="text-4xl font-extrabold">
+        Welcome {isSignInPage && "Back"}
       </div>
-      <form className="flex flex-col items-center w-full" onSubmit={()=>console.log("submitted..")}>
-        {!isSignInPage &&
+      <div className=" text-xl font-light mb-14">
+        {isSignInPage ? "Sign in to get Explored" : "Sign up to get started"}
+      </div>
+      <form
+        className="flex flex-col items-center w-full"
+        onSubmit={() => console.log("submitted..")}
+      >
+        {!isSignInPage && (
           <Input
             lable="Full Name"
             name="name"
@@ -26,7 +31,8 @@ const Form = ({
             className="mb-6"
             value={data.fullname}
             onChange={(e) => setdata({ ...data, fullname: e.target.value })}
-          />}
+          />
+        )}
         <Input
           lable="Email address"
           name="email"
@@ -44,9 +50,21 @@ const Form = ({
           value={data.password}
           onChange={(e) => setdata({ ...data, password: e.target.value })}
         />
-        <Button label={isSignInPage ? "Sign in" : " Sign up"} className="w-1/2 mb-2" type="submit" />
+        <Button
+          label={isSignInPage ? "Sign in" : " Sign up"}
+          className="w-1/3 mb-2"
+          type="submit"
+        />
       </form>
-      <div> {isSignInPage ? "Don't have an account ?" : "Already have an accouny ?"} <span className="text-primary cursor-pointer underline">{isSignInPage ? "Sign up" : " Sign in"}</span></div>
+      <div>
+        {" "}
+        {isSignInPage
+          ? "Don't have an account ?"
+          : "Already have an accouny ?"}{" "}
+        <span className="text-primary cursor-pointer underline">
+          {isSignInPage ? "Sign up" : " Sign in"}
+        </span>
+      </div>
     </div>
   );
 };
