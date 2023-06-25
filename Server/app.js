@@ -1,6 +1,7 @@
 const express = require("express");
 //Import Files
 const Users = require("./models/Users");
+const Conversation = require("./models/conversationSchema");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 //Connection to Database
@@ -36,7 +37,7 @@ app.post("/api/register", async (req, res, next) => {
         return res.status(200).send("user registered successfully");
       }
     }
-  } catch (error) {}
+  } catch (error) { }
 });
 
 app.post("/api/login", async (req, res, next) => {
@@ -57,7 +58,6 @@ app.post("/api/login", async (req, res, next) => {
             userId: user.id,
             email: user.email,
           };
-
           const JWT_SECRET_KEY =
             process.env.JWT_SECRET_KEY || "THIS_IS_A_JWT_SECRET_KEY";
           jwt.sign(
@@ -75,16 +75,40 @@ app.post("/api/login", async (req, res, next) => {
               next();
             }
           );
-
           res.status(200).json({
             user,
           });
         }
       }
     }
-  } catch (error) {}
+  } catch (error) { }
 });
 
+app.post('/api/conversation', async (req, res) => {
+  try {
+    const { senderId, receiverId } = req.body;
+    const newConversation = new Conversation({ members: [senderId, receiverId] });
+    await newConversation.save();
+    res.status(200).send('Conversation Created Succesfully..')
+  } catch (error) {
+    console.log(error, " While Creating Conversation..");
+  }
+})
+app.get('/api/conversation/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const conversation = await Conversation.find({ members: { $in: [userId]  } })
+    console.log(conversation);
+    const conversationuserData = Promise.all(conversation.map(async (conver) => {
+      const receiverId = conver.members.find((member) => member != userId);
+      const user = await Users.findById(receiverId);
+      return { user: { email: user.email, fullName: user.fullName }, conversation: conver._id }
+    }))
+    res.status(200).json(await conversationuserData)
+  } catch (error) {
+    console.log(error, " While Creating Conversation..");
+  }
+})
 app.listen(port, () => {
   console.log("Server is Listening on port " + port);
 });
