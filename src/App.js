@@ -2,31 +2,29 @@ import "./App.css";
 import DashBoard from "./modules/Dashboard";
 import Form from "./modules/Form";
 import { Routes, Route, Navigate } from "react-router-dom";
-const ProtectedRoutes = ({ children }) => {
-  const isLoggedIn = localStorage.getItem("user : token") !== null || true;
+const ProtectedRoutes = ({ children, auth = false }) => {
+  const isLoggedIn = localStorage.getItem("UserToken") !== null || false;
+  console.log(isLoggedIn);
   if (!isLoggedIn && window.location.pathname === "/") {
-    return <Navigate to={`/users/sign_in`} />;
+    return <Navigate to="/users/sign_in" />;
   } else if (
-    isLoggedIn &&
-    ["/users/sign_in", "/users/sign_up"].includes(window.location.pathname)
+    isLoggedIn && 
+    ["/users/sign_in","/users/sign_up"].includes(window.location.pathname)
   ) {
-    return <Navigate to={"/"} />;
+    return <Navigate to="/" />;
   }
-
-  // if (!isLoggedIn) {
-  //   return <Navigate to={"/users/sign_in"} />;
-  // }
 
   return children;
 };
 
 function App() {
   return (
+    
     <Routes>
       <Route
         path="/"
         element={
-          <ProtectedRoutes>
+          <ProtectedRoutes auth={true}>
             <DashBoard />
           </ProtectedRoutes>
         }
@@ -48,11 +46,6 @@ function App() {
         }
       />
     </Routes>
-
-    // <div className="bg-[#e1edff] h-screen flex justify-center items-center">
-    //   {/* <Form /> */}
-    //   <DashBoard />
-    // </div>
   );
 }
 
