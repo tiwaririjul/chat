@@ -28,12 +28,34 @@ const DashBoard = () => {
   ];
   const [users, setUsers] = useState([]);
   const [socket, setSocket] = useState(null);
+  const [messages, setMessages] = useState({});
+
+  console.log(messages);
 
   useEffect(() => {
     setSocket(io(`http://localhost:4000`));
   }, []);
 
-  // useEffect(() => {
+  useEffect(() => {
+    socket?.emit("addUser", user.id);
+    console.log(user);
+    console.log(socket);
+    socket?.on("getUsers", (users) => {
+      console.log("Active users : >>", users);
+    });
+
+    socket?.on("getMessages", (data) => {
+      console.log("data : >>", data);
+      setMessages((prev) => ({
+        ...prev,
+        messages: [...prev.message, { user: data.user, message: data.message }],
+      }));
+    });
+
+    // socket.on("getMessage", (data) => {});
+  }, [socket]);
+
+  // useEffect(() => {s
   //   const socket = io("http://localhost:3000"); // Replace with your server URL
 
   //   socket.on("connect", () => {
@@ -84,7 +106,6 @@ const DashBoard = () => {
   );
   const [conversation, setconversation] = useState([]);
   const [msg, sendmsg] = useState("");
-  const [messages, setMessages] = useState({});
 
   const fetchMessages = async (conversation_id, receiver) => {
     console.log("message ", messages);
@@ -127,6 +148,13 @@ const DashBoard = () => {
     // const response = await res.data;
     // console.log("response ", response);
     // sendmsg("");
+
+    socket?.emit("sendMessage", {
+      conversationId: messages.conversation_id,
+      senderId: user.id,
+      message: msg,
+      receiverId: messages.receiver.receiverId,
+    });
 
     const res = await axios.post("http://localhost:8000/api/message", {
       conversationId: messages.conversation_id,

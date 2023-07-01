@@ -24,8 +24,44 @@ app.use(cors());
 const port = process.env.PORT || 8000;
 
 //Socket.io
+let users = [];
 io.on("connection", (socket) => {
-  console.log(`user connected`, socket);
+  console.log(`user connected`, socket.id);
+  socket.on("addUser", (userId) => {
+    const isUserExist = users.find((user) => user.userId === userId);
+    // socket.userId = userId;
+    if (!isUserExist) {
+      console.log("hmm idhr hu");
+      const user = { userId, socketId: socket.id };
+      users.push(user);
+      io.emit("getUsers", users);
+    }
+  });
+
+  socket.on(
+    "sendMessage",
+    async ({ senderId, receiverId, message, conversationId }) => {
+      const reciever = users.find((user) => user.userId === receiverId);
+      const sender = users.find((user) => user.userId === senderId);
+      const user = await Users.findById(senderId);
+      if (reciever) {
+        io.to(reciever.socketId)
+          .to(sender.socketId)
+          .emit("getMessage", {
+            senderId,
+            message,
+            conversationId,
+            receiverId,
+            user: { id: user._id, fullName: user.fullName, email: user.email },
+          });
+      }
+    }
+  );
+
+  socket.on("disconnect", () => {
+    users = users.filter((user) => user.socketId !== socket.id);
+    io.emit("getUsers", users);
+  });
 });
 
 //Routes
@@ -145,7 +181,7 @@ app.get("/api/conversation/:userId", async (req, res) => {
 app.post("/api/message", async (req, res) => {
   try {
     const { conversationId, senderId, message, receiverId = "" } = req.body;
-    console.log(conversationId, senderId, message, receiverId);
+    // console.log(conversationId, senderId, message, receiverId);
     if (!senderId || !message)
       return res.status(400).send("Please fill all required feilds");
 
@@ -215,7 +251,7 @@ app.get("/api/users/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
     const users = await Users.find({ _id: { $ne: userId } });
-    console.log("users ", users);
+    // console.log("users ", users);
     const userData = Promise.all(
       users.map(async (user) => {
         return {
