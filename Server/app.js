@@ -41,22 +41,32 @@ io.on("connection", (socket) => {
   socket.on(
     "sendMessage",
     async ({ senderId, receiverId, message, conversationId }) => {
-      const reciever = users.find((user) => user.userId === receiverId);
-      const sender = users.find((user) => user.userId === senderId);
-      const user = await Users.findById(senderId);
-      if (reciever) {
-        io.to(reciever.socketId)
+      console.log(users);
+      console.log("qwert", senderId, receiverId, message, conversationId);
+      const receiver = await users.find((user) => user.userId === receiverId);
+      const sender = await users.find((user) => user.userId === senderId);
+      const dbuser = await Users.findById(senderId);
+      console.log(receiver, sender);
+      if (receiver) {
+        console.log("aakash", receiver);
+        console.log("sender" , sender);
+        io.to(receiver.socketId)
           .to(sender.socketId)
           .emit("getMessage", {
             senderId,
             message,
             conversationId,
             receiverId,
-            user: { id: user._id, fullName: user.fullName, email: user.email },
+            user: {
+              id: dbuser._id,
+              fullName: dbuser.fullName,
+              email: dbuser.email,
+            },
           });
       }
     }
   );
+  
 
   socket.on("disconnect", () => {
     users = users.filter((user) => user.socketId !== socket.id);
@@ -72,6 +82,7 @@ app.get("/", (req, res) => {
 app.post("/api/register", async (req, res, next) => {
   try {
     const { fullName, email, password } = req.body.data;
+    console.log(fullName, email, password);
     //console.log("server " , fullName,email);
     if (!fullName || !email || !password) {
       res.status(400).send("Please fill all require detail");
@@ -89,7 +100,9 @@ app.post("/api/register", async (req, res, next) => {
         return res.status(200).send("user registered successfully", newUser);
       }
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+   }
 });
 
 app.post("/api/login", async (req, res, next) => {
@@ -134,7 +147,7 @@ app.post("/api/login", async (req, res, next) => {
         }
       }
     }
-  } catch (error) {}
+  } catch (error) { }
 });
 
 app.post("/api/conversation", async (req, res) => {
@@ -225,7 +238,7 @@ app.get("/api/message/:conversationId", async (req, res) => {
         })
       );
 
-      console.log("message user data ", await messageUserData);
+      //  console.log("message user data ", await messageUserData);
       res.status(200).json(await messageUserData);
     };
     const conversationId = req.params.conversationId;

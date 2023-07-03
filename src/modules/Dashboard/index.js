@@ -3,34 +3,13 @@ import Avatar from "../../assets/avatar1.jpg";
 import Input from "../../components/Input/Index";
 import axios from "axios";
 import { io } from "socket.io-client";
+import { useRef } from "react";
 const DashBoard = () => {
-  const contacts = [
-    {
-      name: "Dhoni",
-      status: "Available",
-      img: Avatar,
-    },
-    {
-      name: "Virat",
-      status: "Available",
-      img: Avatar,
-    },
-    {
-      name: "Sachin",
-      status: "Available",
-      img: Avatar,
-    },
-    {
-      name: "Yuvraj",
-      status: "Available",
-      img: Avatar,
-    },
-  ];
   const [users, setUsers] = useState([]);
   const [socket, setSocket] = useState(null);
   const [messages, setMessages] = useState({});
+  const messageRef = useRef(null);
 
-  console.log(messages);
 
   useEffect(() => {
     setSocket(io(`http://localhost:4000`));
@@ -38,17 +17,17 @@ const DashBoard = () => {
 
   useEffect(() => {
     socket?.emit("addUser", user.id);
-    console.log(user);
-    console.log(socket);
+   // console.log("Users Connected to io", user);
+  //console.log(socket);
     socket?.on("getUsers", (users) => {
       console.log("Active users : >>", users);
     });
 
-    socket?.on("getMessages", (data) => {
+    socket?.on("getMessage", (data) => {
       console.log("data : >>", data);
       setMessages((prev) => ({
         ...prev,
-        messages: [...prev.message, { user: data.user, message: data.message }],
+        messages: [...prev.messages, { user, message: data.message }],
       }));
     });
 
@@ -74,7 +53,9 @@ const DashBoard = () => {
   //     socket.disconnect();
   //   };
   // }, []);
-
+  useEffect(() => {
+    messageRef?.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages?.messages])
   useEffect(() => {
     const loggenInUser = JSON.parse(localStorage.getItem("UserDetail"));
     //  console.log(loggenInUser);
@@ -94,7 +75,6 @@ const DashBoard = () => {
       const res = await axios.get(
         `http://localhost:8000/api/users/${user?.id}`
       );
-
       const resData = await res.data;
       setUsers(resData);
     };
@@ -112,6 +92,7 @@ const DashBoard = () => {
     // console.log("Conversation ", <conversation_i></conversation_i>d);
     // const res = await axios.get(
     //   `http://localhost:8000/api/message/${conversation_id}`
+
     // );
     // console.log(res);
     // const resData = await res.data;
@@ -132,6 +113,7 @@ const DashBoard = () => {
     setMessages({ messages: resData, receiver, conversation_id });
   };
   const SendMessage = async (e) => {
+    e.preventDefault();
     // const res = await fetch("http://localhost:8000/api/message", {
     //   method: "POST",
     //   headers: {
@@ -148,27 +130,24 @@ const DashBoard = () => {
     // const response = await res.data;
     // console.log("response ", response);
     // sendmsg("");
-
-    socket?.emit("sendMessage", {
-      conversationId: messages.conversation_id,
-      senderId: user.id,
-      message: msg,
-      receiverId: messages.receiver.receiverId,
-    });
-
     const res = await axios.post("http://localhost:8000/api/message", {
       conversationId: messages.conversation_id,
       senderId: user.id,
       message: msg,
       receiverId: messages.receiver.receiverId,
     });
-
-    console.log("res ", res.data);
     sendmsg("");
+    socket?.emit("sendMessage", {
+      conversationId: messages.conversation_id,
+      senderId: user.id,
+      message: msg,
+      receiverId: messages.receiver.receiverId,
+    });
   };
+  console.log("messages", messages);
   return (
     <div className="w-screen flex">
-      <div className="w-[25%] h-screen bg-secondary">
+      <div className="w-[25%] h-screen bg-secondary overflow-scroll">
         <div className="flex items-center my-8 mx-14">
           <div className="border border-primary p-[2px] rounded-full">
             <img src={Avatar} width={70} heigth={70} />
@@ -200,8 +179,7 @@ const DashBoard = () => {
                           {user.fullName}
                         </h3>
                         {/* <p className="text-lg font-light text-gray-600">
-                            {user.email}
-                          </p> */}
+                            </p> */}
                       </div>
                     </div>
                   </div>
@@ -262,9 +240,12 @@ const DashBoard = () => {
                 // console.log(message);
                 if (id == user.id) {
                   return (
-                    <div className="max-w-[40%] bg-primary rounded-b-xl rounded-tr-xl ml-auto p-4 text-white mb-6">
-                      {message}
-                    </div>
+                    <>
+                      <div className="max-w-[40%] bg-primary rounded-b-xl rounded-tr-xl ml-auto p-4 text-white mb-6">
+                        {message}
+                      </div>
+                      <div ref={messageRef}></div>
+                    </>
                   );
                 } else {
                   return (
@@ -290,13 +271,12 @@ const DashBoard = () => {
             value={msg}
             onChange={(e) => sendmsg(e.target.value)}
             className="w-[75%]"
-            inputClassname="p-4 border-0 shadow-md rounded-full bg-light focus:ring-0 focus:border-0 outline-none"
+            inputClassname="p-4 border-0 shadow-md rounded-full bg-light focus:ring-0 focus:border-10 outline-none"
           />
           <div
-            className={`ml-4 p-2 cursor-pointer bg-light rounded-full ${
-              !msg && "pointer-events-none"
-            }`}
-            onClick={() => SendMessage()}
+            className={`ml-4 p-2 cursor-pointer bg-light rounded-full ${!msg && "pointer-events-none"
+              }`}
+            onClick={(e) => SendMessage(e)}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -336,7 +316,7 @@ const DashBoard = () => {
           </div>
         </div>
       </div>
-      <div className="w-[25%] h-screen bg-light px-8 py-16">
+      <div className="w-[25%] h-screen bg-light px-8 py-16 overflow-scroll">
         <div className="text-primary text-lg">people</div>
         <div>
           {users.length > 0 ? (
